@@ -1,0 +1,11 @@
+// Prisma schema akan ditambahkan nanti saat integrasi database
+// File ini dibuat sebagai placeholder untuk struktur folder
+
+// generator client {
+//   provider = "prisma-client-js"
+// }
+
+// datasource db {
+//   provider = "postgresql"
+//   url      = env("DATABASE_URL")
+// }

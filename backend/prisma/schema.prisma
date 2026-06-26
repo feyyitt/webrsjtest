@@ -1,0 +1,141 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model barang {
+  id                String              @id
+  kode_barang       String              @unique
+  nama_barang       String
+  jenis_barang      JenisBarang
+  satuan            String
+  is_active         Boolean             @default(true)
+  created_at        DateTime            @default(now())
+  updated_at        DateTime            @updatedAt
+  kategori          String?
+  merk              String?
+  keterangan        String?
+  batch_habis_pakai batch_habis_pakai[]
+  penerimaan_aset   penerimaan_aset[]
+}
+
+model batch_habis_pakai {
+  id                        String                      @id
+  barang_id                 String
+  kode_batch                String                      @unique
+  expired_date              DateTime?
+  jumlah_masuk              Int
+  jumlah_keluar             Int                         @default(0)
+  jumlah_sisa               Int
+  harga_satuan              Decimal                     @default(0) @db.Decimal(15, 2)
+  created_at                DateTime                    @default(now())
+  updated_at                DateTime                    @updatedAt
+  barang                    barang                      @relation(fields: [barang_id], references: [id], onDelete: Cascade)
+  mutasi_detail_habis_pakai mutasi_detail_habis_pakai[]
+}
+
+model mutasi {
+  id                        String                      @id
+  tipe                      TipeMutasi
+  tipe_barang               TipeBarangMutasi
+  tanggal                   DateTime                    @default(now())
+  user_id                   String
+  keterangan                String?
+  created_at                DateTime                    @default(now())
+  updated_at                DateTime                    @updatedAt
+  users                     users                       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  mutasi_detail_aset        mutasi_detail_aset[]
+  mutasi_detail_habis_pakai mutasi_detail_habis_pakai[]
+}
+
+model mutasi_detail_aset {
+  id           String    @id
+  mutasi_id    String
+  unit_aset_id String
+  created_at   DateTime  @default(now())
+  mutasi       mutasi    @relation(fields: [mutasi_id], references: [id], onDelete: Cascade)
+  unit_aset    unit_aset @relation(fields: [unit_aset_id], references: [id], onDelete: Cascade)
+}
+
+model mutasi_detail_habis_pakai {
+  id                String            @id
+  mutasi_id         String
+  batch_id          String
+  jumlah            Int
+  created_at        DateTime          @default(now())
+  batch_habis_pakai batch_habis_pakai @relation(fields: [batch_id], references: [id], onDelete: Cascade)
+  mutasi            mutasi            @relation(fields: [mutasi_id], references: [id], onDelete: Cascade)
+}
+
+model penerimaan_aset {
+  id           String      @id
+  barang_id    String
+  tahun_masuk  Int
+  jumlah_unit  Int
+  harga_satuan Decimal     @default(0) @db.Decimal(15, 2)
+  keterangan   String?
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+  barang       barang      @relation(fields: [barang_id], references: [id], onDelete: Cascade)
+  unit_aset    unit_aset[]
+}
+
+model unit_aset {
+  id                 String               @id
+  penerimaan_aset_id String
+  kode_unit          String               @unique
+  status             StatusUnitAset       @default(AKTIF)
+  kondisi            KondisiUnitAset      @default(BAIK)
+  keterangan         String?
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+  mutasi_detail_aset mutasi_detail_aset[]
+  penerimaan_aset    penerimaan_aset      @relation(fields: [penerimaan_aset_id], references: [id], onDelete: Cascade)
+}
+
+model users {
+  id         String   @id
+  username   String   @unique
+  password   String
+  nama       String
+  role       UserRole
+  is_active  Boolean  @default(true)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  mutasi     mutasi[]
+}
+
+enum JenisBarang {
+  ASET
+  HABIS_PAKAI
+}
+
+enum KondisiUnitAset {
+  BAIK
+  RUSAK
+  HILANG
+}
+
+enum StatusUnitAset {
+  AKTIF
+  DIHAPUS
+}
+
+enum TipeBarangMutasi {
+  ASET
+  HABIS_PAKAI
+}
+
+enum TipeMutasi {
+  MASUK
+  KELUAR
+}
+
+enum UserRole {
+  ADMIN
+  PETUGAS
+}
